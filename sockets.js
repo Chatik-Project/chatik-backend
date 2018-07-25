@@ -1,6 +1,5 @@
 "use stict";
 
-const MessageModel = require('./models/messages.model');
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
 const config = require('./config/index');
@@ -23,13 +22,18 @@ function auth (socket, next) {
 
 module.exports = io => {
     io.on('connection', function (socket) {
-        // auth(socket, (guest, user) => {
-        //     if(!guest) {
+        auth(socket, (guest, user) => {
+            if(!guest) {
                 socket.join('all');
-                socket.username = 'vasya';
+                socket.username = user.username;
                 socket.emit('connected', `you are connected to chat as ${socket.username}`);
-        //     }
-        // });
+            } else {
+                socket.join('all');
+                let uName = 'guest'+ Math.round(Math.random()*10000000);
+                socket.username = uName;
+                socket.emit('connected', `you are connected to chat as ${socket.username}`);
+            }
+        });
 
         socket.on('msg', content => {
             const obj = {

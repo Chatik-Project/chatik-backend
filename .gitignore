@@ -4,5 +4,3 @@ config/config.json
 .idea
 db.json
 vk.json
-views
-public

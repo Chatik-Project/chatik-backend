@@ -2,7 +2,7 @@
 
 const UsersModel = require('./models/users.model');
 const _ = require('lodash');
-const config = require('./config/index');
+const config = require('./config');
 const bcrypt = require('bcryptjs');
 const express = require('express');
 const passport = require('passport');
@@ -28,12 +28,15 @@ module.exports = app => {
     // app.use('/assets', express.static('./client/public'));
 
     app.get('/', (req, res) => {
-        res.render('index.ejs', { error : null});
+        res.render('index.ejs');
     });
 
+    app.get('/login', (req, res) => {
+        res.render('login.ejs')
+    })
     app.post('/login', async (req, res) => {
         try {
-            let user = await UsersModel.findOne({username: {$regex: _.escapeRegExp(req.body.username), $options: "i"}}).lean().exec();
+            let user = await UsersModel.findOne({email: {$regex: _.escapeRegExp(req.body.email), $options: "i"}}).lean().exec();
             if(user != void(0) && bcrypt.compareSync(req.body.password, user.password)) {
                 const token = createToken({id: user._id, username: user.username});
                 res.cookie('token', token, {
@@ -54,6 +57,7 @@ module.exports = app => {
             if(user != void(0)) return res.status(400).send({message: "User already exist"});
 
             user = await UsersModel.create({
+                email: req.body.email,
                 username: req.body.username,
                 password: req.body.password
             });
