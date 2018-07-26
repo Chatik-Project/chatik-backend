@@ -64,11 +64,11 @@ module.exports = io => {
             MessageModel.find({})
                 .sort({date: -1})
                 .limit(10)
-                .sort({date: 1})
+                // .sort({date: 1})
                 .lean()
                 .exec((err, messages) => {
                     if (!err) {
-                        socket.emit('history', messages);
+                        socket.emit('history', messages.reverse());
                     }
                 });
         })
