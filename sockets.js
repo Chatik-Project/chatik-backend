@@ -5,6 +5,7 @@ const passport = require('passport');
 const config = require('./config/index');
 const MessageModel = require('./models/messages.model');
 
+
 function auth (socket, next) {
 
     // Parse cookie

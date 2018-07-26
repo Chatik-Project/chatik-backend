@@ -8,13 +8,34 @@ const bcrypt = require('bcryptjs');
 const express = require('express');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+const io = require('socket.io');
 
 function checkAuth (req, res, next) {
     passport.authenticate('jwt', { session: false }, (err, decryptToken, jwtError) => {
         if(jwtError != void(0) || err != void(0)) return res.render('index', { error: err || jwtError});
         req.user = decryptToken;
+        console.log(req.user);
+        console.log(req.user.username);
         next();
     })(req, res, next);
+}
+
+function auth2 (socket, next) {
+
+    // Parse cookie
+    cookieParser()(socket.request, socket.request.res, () => {});
+
+    // JWT authenticate
+    passport.authenticate('jwt', {session: true}, function (error, decryptToken, jwtError) {
+        if(!error && !jwtError && decryptToken) {
+            next(false, {username: decryptToken.username, id: decryptToken.id});
+        } else {
+            next('guest');
+        }
+    })
+    (socket.request, socket.request.res);
+
 }
 
 function createToken (body) {
@@ -35,6 +56,22 @@ module.exports = app => {
     app.get('/login', (req, res) => {
         res.render('login.ejs')
     });
+
+
+    app.post('/changename', checkAuth, (req, res) => {
+        console.log(req.user);
+        UsersModel.update({username: req.user.username}, { $set: {username: req.body.newname}}, function (err, user) {
+            if (err) return handleError(err);
+            res.send("Succes!");
+        });
+    });
+
+
+    app.get('/profile', (req, res) => {
+        res.render('profile.ejs')
+    });
+
+
 
     app.get('/api/getalluser', async (req, res) => {
         let users = await UsersModel.find().lean().exec();
