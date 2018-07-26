@@ -1,6 +1,7 @@
 "use strict";
 
 const UsersModel = require('./models/users.model');
+const MessageModel = require('./models/messages.model');
 const _ = require('lodash');
 const config = require('./config');
 const bcrypt = require('bcryptjs');
@@ -40,6 +41,11 @@ module.exports = app => {
         res.send(users);
         }
     );
+
+    app.get('/api/getallmsg', async (req, res) => {
+        let messages = await MessageModel.find().lean().exec();
+        res.send(messages);
+    })
 
     app.post('/login', async (req, res) => {
         try {
