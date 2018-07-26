@@ -10,13 +10,14 @@ function auth (socket, next) {
     cookieParser()(socket.request, socket.request.res, () => {});
 
     // JWT authenticate
-    passport.authenticate('jwt', {session: false}, function (error, decryptToken, jwtError) {
+    passport.authenticate('jwt', {session: true}, function (error, decryptToken, jwtError) {
         if(!error && !jwtError && decryptToken) {
             next(false, {username: decryptToken.username, id: decryptToken.id});
         } else {
             next('guest');
         }
-    })(socket.request, socket.request.res);
+    })
+    (socket.request, socket.request.res);
 
 }
 

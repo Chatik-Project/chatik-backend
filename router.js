@@ -33,7 +33,14 @@ module.exports = app => {
 
     app.get('/login', (req, res) => {
         res.render('login.ejs')
-    })
+    });
+
+    app.get('/api/getalluser', async (req, res) => {
+        let users = await UsersModel.find().lean().exec();
+        res.send(users);
+        }
+    );
+
     app.post('/login', async (req, res) => {
         try {
             let user = await UsersModel.findOne({email: {$regex: _.escapeRegExp(req.body.email), $options: "i"}}).lean().exec();
