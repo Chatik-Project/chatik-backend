@@ -56,6 +56,10 @@ module.exports = io => {
 
         });
 
+        socket.on('changeName', name => {
+            socket.username = name;
+        })
+
         socket.on('receiveHistory', () => {
             MessageModel.find({})
                 .sort({date: -1})

@@ -29,7 +29,6 @@ $(".logout-btn").on('click', e => {
 
 $( document ).ready( () => {
     var socket = io.connect('http://127.0.0.1:7777');
-    let name = 'superUser';
     socket.on('connected', function (msg) {
         console.log(msg);
         socket.emit('receiveHistory');
