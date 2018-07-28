@@ -11,45 +11,50 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const io = require('socket.io');
 
-function checkAuth (req, res, next) {
-    passport.authenticate('jwt', { session: false }, (err, decryptToken, jwtError) => {
-        if(jwtError != void(0) || err != void(0)) return res.render('index', { error: err || jwtError});
-        req.user = decryptToken;
-        console.log(req.user);
-        console.log(req.user.username);
-        next();
-    })(req, res, next);
-}
+// function checkAuth (req, res, next) {
+//     passport.authenticate('jwt', { session: false }, (err, decryptToken, jwtError) => {
+//         if(jwtError != void(0) || err != void(0)) return res.render('index', { error: err || jwtError});
+//         req.user = decryptToken;
+//         console.log(req.user);
+//         console.log(req.user.username);
+//         next();
+//     })(req, res, next);
+// }
+//
+// function auth2 (socket, next) {
+//
+//     // Parse cookie
+//     cookieParser()(socket.request, socket.request.res, () => {});
+//
+//     // JWT authenticate
+//     passport.authenticate('jwt', {session: true}, function (error, decryptToken, jwtError) {
+//         if(!error && !jwtError && decryptToken) {
+//             next(false, {username: decryptToken.username, id: decryptToken.id});
+//         } else {
+//             next('guest');
+//         }
+//     })
+//     (socket.request, socket.request.res);
+//
+// }
+//
+// function createToken (body) {
+//     return jwt.sign(
+//         body,
+//         config.jwt.secretOrKey,
+//         {expiresIn: config.expiresIn}
+//     );
+// }
 
-function auth2 (socket, next) {
-
-    // Parse cookie
-    cookieParser()(socket.request, socket.request.res, () => {});
-
-    // JWT authenticate
-    passport.authenticate('jwt', {session: true}, function (error, decryptToken, jwtError) {
-        if(!error && !jwtError && decryptToken) {
-            next(false, {username: decryptToken.username, id: decryptToken.id});
-        } else {
-            next('guest');
-        }
-    })
-    (socket.request, socket.request.res);
-
-}
-
-function createToken (body) {
-    return jwt.sign(
-        body,
-        config.jwt.secretOrKey,
-        {expiresIn: config.expiresIn}
-    );
-}
-
-module.exports = app => {
+module.exports = (app, passport) => {
     // app.use('/assets', express.static('./client/public'));
 
     app.get('/', (req, res) => {
+        // console.log(req.user);
+        // console.log(req.session);
+        // // console.log(isLoggedIn());
+        // console.log(isLoggedIn);
+        // console.log(req.cookies);
         res.render('index.ejs');
     });
 
@@ -57,17 +62,26 @@ module.exports = app => {
         res.render('login.ejs')
     });
 
+    // function isLoggedIn(req, res, next) {
+    //
+    //     if (req.isAuthenticated())
+    //         return next();
+    //
+    //     res.redirect('/404');
+    //
+    // }
 
-    app.post('/changename', checkAuth, (req, res) => {
+
+    app.post('/changename', (req, res) => {
         console.log(req.user);
-        UsersModel.update({username: req.user.username}, { $set: {username: req.body.newname}}, function (err, user) {
+        UsersModel.update({"local.name": req.user.local.name}, { $set: {"local.name": req.body.newname}}, function (err, user) {
             if (err) return handleError(err);
             res.send("Succes!");
         });
     });
 
 
-    app.get('/profile', (req, res) => {
+    app.get('/profile', isLoggedIn, (req, res) => {
         res.render('profile.ejs')
     });
 
@@ -84,50 +98,53 @@ module.exports = app => {
         res.send(messages);
     })
 
-    app.post('/login', async (req, res) => {
-        try {
-            let user = await UsersModel.findOne({email: {$regex: _.escapeRegExp(req.body.email), $options: "i"}}).lean().exec();
-            if(user != void(0) && bcrypt.compareSync(req.body.password, user.password)) {
-                const token = createToken({id: user._id, username: user.username});
-                res.cookie('token', token, {
-                    httpOnly: true
-                });
+    app.post('/login', passport.authenticate('local-login', {
+        successRedirect : '/profile', // redirect to the secure profile section
+        failureRedirect : '/login', // redirect back to the signup page if there is an error
+        // failureFlash : true // allow flash messages
+    }));
 
-                res.status(200).send({message: "User login success."});
-            } else res.status(400).send({message: "User not exist or password not correct"});
-        } catch (e) {
-            console.error("E, login,", e);
-            res.status(500).send({message: "some error"});
-        }
-    });
-
-    app.post('/register', async (req, res) => {
-        try {
-            let user = await UsersModel.findOne({username: {$regex: _.escapeRegExp(req.body.username), $options: "i"}}).lean().exec();
-            if(user != void(0)) return res.status(400).send({message: "User already exist"});
-
-            user = await UsersModel.create({
-                email: req.body.email,
-                username: req.body.username,
-                password: req.body.password
-            });
-
-            const token = createToken({id: user._id, username: user.username});
-
-            res.cookie('token', token, {
-                httpOnly: true
-            });
-
-            res.status(200).send({message: "User created."});
-
-        } catch (e) {
-            console.error("E, register,", e);
-            res.status(500).send({message: "some error"});
-        }
-    });
+    app.post('/register', passport.authenticate('local-signup', {
+        successRedirect : '/profile', // redirect to the secure profile section
+        failureRedirect : '/signup', // redirect back to the signup page if there is an error
+        // failureFlash : true // allow flash messages
+    }));
 
     app.post('/logout', (req, res) => {
-        res.clearCookie('token');
-        res.status(200).send({message: "Logout success."});
+        // req.logout();
+        // res.clearCookie('token');
+        // res.status(200).send({message: "Logout success."});
+        req.session.destroy(function (err) {
+            res.redirect('/'); //Inside a callback… bulletproof!
+        })
+
     })
+
+    app.get('/auth/vk',
+        passport.authenticate('vk', {
+            scope: ['friends']
+        }),
+        function (req, res) {
+            // The request will be redirected to vk.com
+            // for authentication, so
+            // this function will not be called.
+        });
+
+    app.get('/auth/vk/callback',
+        passport.authenticate('vk', {
+            failureRedirect: '/auth'
+        }),
+        function (req, res) {
+            // Successful authentication
+            //, redirect home.
+            console.log("Удачная аутентификация!!!длаа")
+            res.redirect('/');
+        });
 };
+
+function isLoggedIn(req, res, next) {
+    if (req.isAuthenticated())
+        return next();
+
+    res.redirect('/');
+}

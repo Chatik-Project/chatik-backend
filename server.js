@@ -7,21 +7,38 @@ const io = require('socket.io')(server, {serveClient: true});
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 
 var path 		= require('path');
 
 const passport = require('passport');
-const { Strategy } = require('passport-jwt');
 
-const { jwt } = require('./config');
+var session = require("express-session")({
+    secret: "my-secret",
+    resave: true,
+    saveUninitialized: true
+});
+var sharedsession = require("express-socket.io-session");
+// const { Strategy } = require('passport-jwt');
+
+// const { jwt } = require('./config');
 
 
 var config 		= require('./config/index');
 
-passport.use(new Strategy(jwt, function(jwt_payload, done) {
-    if(jwt_payload != void(0)) return done(false, jwt_payload);
-    done();
-}));
+// app.use(cookieSession({
+//     maxAge: 24 * 60 * 60 *1000,
+//     keys: ['wgwsighwiortgnowirg']
+// }))
+
+// passport.use(new Strategy(jwt, function(jwt_payload, done) {
+//     if(jwt_payload != void(0)) return done(false, jwt_payload);
+//     done();
+// }));
+app.use(session); //session secret WTF?
+app.use(passport.initialize());
+app.use(passport.session()); // persistent login sessions
+require('./config/passport')(passport); // pass passport for configuration
 
 var dbURI = "mongodb://" +
     encodeURIComponent(config.db.username) + ":" +
@@ -50,7 +67,11 @@ app.use(bodyParser.json());
 
 app.use(cookieParser());
 
-require('./router')(app);
+io.use(sharedsession(session, {
+    autoSave:true
+}));
+
+require('./router')(app, passport);
 
 require('./sockets')(io);
 

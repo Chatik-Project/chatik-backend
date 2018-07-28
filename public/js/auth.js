@@ -31,6 +31,7 @@ $( document ).ready( () => {
     var socket = io.connect('http://127.0.0.1:7777');
     socket.on('connected', function (msg) {
         console.log(msg);
+        socket.emit('login', 'WTF!');
         socket.emit('receiveHistory');
     });
 
