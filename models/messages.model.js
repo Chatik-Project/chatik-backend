@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 
 const MessageSchema = new Schema({
     date: {type: Date},
+    dateFormat: {type: String},
     content: {type: String},
     username: {type: String}
 }, {

@@ -2,8 +2,8 @@
 
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
-const config = require('./config/index');
 const MessageModel = require('./models/messages.model');
+var moment = require('moment');
 
 
 function auth (socket, next) {
@@ -29,18 +29,19 @@ module.exports = io => {
             if (!guest) {
                 socket.join('all');
                 socket.username = user.username;
-                socket.emit('connected', `you are connected to chat as ${socket.username}`);
+                socket.emit('connected', `You are connected to chat as ${socket.username}`);
             } else {
                 socket.join('all');
                 let uName = 'guest' + Math.round(Math.random() * 10000000);
                 socket.username = uName;
-                socket.emit('connected', `you are connected to chat as ${socket.username}`);
+                socket.emit('connected', `You are connected to chat as ${socket.username}`);
             }
         });
 
         socket.on('msg', content => {
             const obj = {
                 date: new Date(),
+                dateFormat: moment(new Date()).format("HH:mm:ss DD.MM.YYYY"),
                 content: content,
                 username: socket.username
             };
@@ -59,6 +60,7 @@ module.exports = io => {
 
         socket.on('changeName', name => {
             socket.username = name;
+            socket.emit('nameChanged', `You successful changed name to ${socket.username}`);
         })
 
         socket.on('receiveHistory', () => {
