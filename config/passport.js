@@ -16,7 +16,7 @@ module.exports = function(passport) {
     //     done(null, user.id);
     // });
     passport.serializeUser(function (user, done) {
-        done(null, JSON.stringify(user));
+        done(null, user._id);
         console.log("HERE!!!!!!" + JSON.stringify(user));
         console.log(user);
         console.log(user._id);
@@ -37,13 +37,10 @@ module.exports = function(passport) {
     //
     // });
 
-    passport.deserializeUser(function (data, done) {
-        try {
-            done(null, JSON.parse(data));
-            console.log('OUT')
-        } catch (e) {
-            done(err)
-        }
+    passport.deserializeUser(function (id, done) {
+        User.findById(id, function(err, user) {
+            done(err, user);
+        });
     });
 
     // =========================================================================

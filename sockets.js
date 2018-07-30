@@ -75,11 +75,11 @@ module.exports = io => {
             console.log("!!!!!!!!!!!!" + socket.handshake.session.cookie);
             // let hs = new Object(JSON.parse(socket.handshake));
             // console.log("ACT!" + hs.cookie)
-            let var0 = new Object(JSON.parse(socket.handshake.session.passport.user));
+            let var0 = socket.handshake.session.passport.user;
 
             console.log(var0);
             console.log(var0._id);
-            User.findOne({"_id" : var0._id}, function (err, user){
+            User.findOne({"_id" : var0}, function (err, user){
                 if (err)
                     return done(err);
                 console.log(user);
