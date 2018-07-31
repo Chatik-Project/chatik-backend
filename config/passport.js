@@ -8,15 +8,9 @@ module.exports = function(passport) {
     // =========================================================================
     // passport session setup ==================================================
     // =========================================================================
-    // required for persistent login sessions
-    // passport needs ability to serialize and unserialize users out of session
 
-    // used to serialize the user for the session
-    // passport.serializeUser(function(user, done) {
-    //     done(null, user.id);
-    // });
     passport.serializeUser(function (user, done) {
-        done(null, user._id);
+        done(null, user);
         console.log("HERE!!!!!!" + JSON.stringify(user));
         console.log(user);
         console.log(user._id);
@@ -24,21 +18,8 @@ module.exports = function(passport) {
     });
 
 
-    // used to deserialize the user
-    // passport.deserializeUser(function(id, done) {
-    //     User.findById(id).then(function(user) {
-    //         if(user){
-    //             done(null, user.get());
-    //         }
-    //         else{
-    //             done(user.errors,null);
-    //         }
-    //     });
-    //
-    // });
-
-    passport.deserializeUser(function (id, done) {
-        User.findById(id, function(err, user) {
+    passport.deserializeUser(function (user, done) {
+        User.findById(user._id, function(err, user) {
             done(err, user);
         });
     });
@@ -157,7 +138,7 @@ module.exports = function(passport) {
         {
             clientID: vk.VK_APP_ID,
             clientSecret: vk.VK_APP_SECRET,
-            callbackURL:  "http://127.0.0.1:7777/auth/vk/callback"
+            callbackURL: vk.CALLBACK_URL
         },
 
         function (req, accessToken, refreshToken, profile, done) {
